@@ -360,6 +360,7 @@ export const FEATURE_FLAGS = {
     SCHEMA_MANAGEMENT: 'schema-management', // owner: @aspicer
     SEEKBAR_PREVIEW_SCRUBBING: 'seekbar-preview-scrubbing', // owner: @pauldambra #team-replay
     SESSIONS_EXPLORER: 'sessions-explorer', // owner: @jabahamondes #team-web-analytics
+    SESSION_REPLAY_PRODUCT_INTRODUCTION: 'session-replay-product-introduction', // owner: @pauldambra #team-replay
     SEMVER_TARGETING: 'semver-targeting', // owner: #team-feature-flags
     SHOPIFY_DWH: 'shopify-dwh', // owner: @andrew #team-data-stack
     SHOW_REFERRER_FAVICON: 'show-referrer-favicon', // owner: @jordanm-posthog #team-web-analytics

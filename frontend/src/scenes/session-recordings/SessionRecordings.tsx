@@ -7,6 +7,7 @@ import { LemonBadge, LemonButton, LemonMenu, Link } from '@posthog/lemon-ui'
 import { AccessControlAction } from 'lib/components/AccessControlAction'
 import { AppShortcut } from 'lib/components/AppShortcuts/AppShortcut'
 import { keyBinds } from 'lib/components/AppShortcuts/shortcuts'
+import { FlaggedFeature } from 'lib/components/FlaggedFeature'
 import { LiveRecordingsCount } from 'lib/components/LiveUserCount'
 import { ProductIntroduction } from 'lib/components/ProductIntroduction/ProductIntroduction'
 import { FilmCameraHog, WarningHog } from 'lib/components/hedgehogs'
@@ -192,14 +193,16 @@ function Warnings(): JSX.Element {
                     </div>
                 </LemonBanner>
             ) : (
-                <ProductIntroduction
-                    productName="session replay"
-                    productKey={ProductKey.SESSION_REPLAY}
-                    thingName="playlist"
-                    description="Use session replay playlists to easily group and analyze user sessions. Curate playlists based on events or user segments, spot patterns, diagnose issues, and share insights with your team."
-                    docsURL="https://posthog.com/docs/session-replay/manual"
-                    customHog={FilmCameraHog}
-                />
+                <FlaggedFeature flag="session-replay-product-introduction" match="control">
+                    <ProductIntroduction
+                        productName="session replay"
+                        productKey={ProductKey.SESSION_REPLAY}
+                        thingName="playlist"
+                        description="Use session replay playlists to easily group and analyze user sessions. Curate playlists based on events or user segments, spot patterns, diagnose issues, and share insights with your team."
+                        docsURL="https://posthog.com/docs/session-replay/manual"
+                        customHog={FilmCameraHog}
+                    />
+                </FlaggedFeature>
             )}
         </>
     )
