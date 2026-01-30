@@ -1,19 +1,18 @@
-import { McpServer, type ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { RESOURCE_URI_META_KEY } from '@modelcontextprotocol/ext-apps/server'
+import { McpServer, type ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { McpAgent } from 'agents/mcp'
 import type { z } from 'zod'
 
 import { ApiClient } from '@/api/client'
-import type { AnalyticsMetadata, WithAnalytics } from '@/ui-apps/types'
 import { getPostHogClient } from '@/integrations/mcp/utils/client'
 import { formatResponse } from '@/integrations/mcp/utils/formatResponse'
 import { handleToolError } from '@/integrations/mcp/utils/handleToolError'
 import { AnalyticsEvent } from '@/lib/analytics'
 import {
     CUSTOM_BASE_URL,
-    getBaseUrlForRegion,
     POSTHOG_EU_BASE_URL,
     POSTHOG_US_BASE_URL,
+    getBaseUrlForRegion,
     toCloudRegion,
 } from '@/lib/constants'
 import { SessionManager } from '@/lib/utils/SessionManager'
@@ -24,6 +23,7 @@ import { registerResources } from '@/resources'
 import { registerUiAppResources } from '@/resources/ui-apps'
 import { getToolsFromContext } from '@/tools'
 import type { CloudRegion, Context, State, Tool } from '@/tools/types'
+import type { AnalyticsMetadata, WithAnalytics } from '@/ui-apps/types'
 
 const INSTRUCTIONS = `
 - You are a helpful assistant that can query PostHog API.
@@ -40,10 +40,7 @@ export type RequestProperties = {
 }
 
 export class MCP extends McpAgent<Env> {
-    server = new McpServer(
-        { name: 'PostHog', version: '1.0.0' },
-        { instructions: INSTRUCTIONS }
-    )
+    server = new McpServer({ name: 'PostHog', version: '1.0.0' }, { instructions: INSTRUCTIONS })
 
     initialState: State = {
         projectId: undefined,
@@ -289,7 +286,7 @@ export class MCP extends McpAgent<Env> {
         const context = await this.getContext()
 
         // Register prompts and resources
-        await registerPrompts(this.server, context)
+        await registerPrompts(this.server)
         await registerResources(this.server, context)
         await registerUiAppResources(this.server, context)
 
