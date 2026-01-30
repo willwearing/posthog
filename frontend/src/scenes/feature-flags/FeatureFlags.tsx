@@ -270,7 +270,8 @@ export function OverViewTab({
     const { aggregationLabel } = useValues(groupsModel)
 
     const flagLogic = featureFlagsLogic({ flagPrefix })
-    const { featureFlagsLoading, featureFlags, count, pagination, filters, shouldShowEmptyState } = useValues(flagLogic)
+    const { featureFlagsLoading, displayedFlags, count, pagination, filters, shouldShowEmptyState } =
+        useValues(flagLogic)
     const { setFeatureFlagsFilters } = useActions(flagLogic)
     const { featureFlags: enabledFeatureFlags } = useValues(enabledFeaturesLogic)
 
@@ -475,12 +476,14 @@ export function OverViewTab({
                         <WrappingLoadingSkeleton>1-100 of 150 flags</WrappingLoadingSkeleton>
                     ) : count ? (
                         `${startCount}${endCount - startCount > 1 ? '-' + endCount : ''} of ${pluralize(count, 'flag')}`
-                    ) : null}
+                    ) : (
+                        'No flags found'
+                    )}
                 </span>
             </div>
 
             <LemonTable
-                dataSource={featureFlags.results}
+                dataSource={displayedFlags}
                 columns={columns}
                 rowKey="key"
                 defaultSorting={{
@@ -488,8 +491,8 @@ export function OverViewTab({
                     order: -1,
                 }}
                 noSortingCancellation
-                loading={featureFlagsLoading}
-                pagination={pagination}
+                loading={featureFlagsLoading && displayedFlags.length === 0}
+                pagination={displayedFlags.length === count ? pagination : undefined}
                 nouns={nouns}
                 data-attr="feature-flag-table"
                 emptyState="No results for this filter, change filter or create a new flag."

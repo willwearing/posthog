@@ -18,6 +18,64 @@ import type { featureFlagsLogicType } from './featureFlagsLogicType'
 
 export const FLAGS_PER_PAGE = 100
 
+function flagMatchesSearch(flag: FeatureFlagType, search?: string): boolean {
+    if (!search) {
+        return true
+    }
+    const s = search.toLowerCase()
+    return flag.key.toLowerCase().includes(s) || !!flag.name?.toLowerCase().includes(s)
+}
+
+function flagMatchesStatus(flag: FeatureFlagType, active?: string): boolean {
+    if (!active) {
+        return true
+    }
+    if (active === 'true') {
+        return flag.active
+    }
+    if (active === 'false') {
+        return !flag.active
+    }
+    if (active === 'STALE') {
+        return flag.status === 'STALE'
+    }
+    return true
+}
+
+function flagMatchesType(flag: FeatureFlagType, type?: string): boolean {
+    if (!type) {
+        return true
+    }
+
+    const isMultivariate = !!flag.filters.multivariate?.variants?.length
+
+    if (type === 'boolean') {
+        return !isMultivariate
+    }
+    if (type === 'multivariant') {
+        return isMultivariate
+    }
+    if (type === 'experiment') {
+        return !!flag.experiment_set?.length
+    }
+    if (type === 'remote_config') {
+        return flag.is_remote_configuration
+    }
+
+    return true
+}
+
+function flagMatchesFilters(flag: FeatureFlagType, filters: FeatureFlagsFilters): boolean {
+    return (
+        flagMatchesSearch(flag, filters.search) &&
+        flagMatchesStatus(flag, filters.active) &&
+        flagMatchesType(flag, filters.type) &&
+        (!filters.created_by_id || flag.created_by?.id === filters.created_by_id) &&
+        (!filters.tags?.length || filters.tags.every((tag) => flag.tags?.includes(tag))) &&
+        (!filters.evaluation_runtime || flag.evaluation_runtime === filters.evaluation_runtime)
+    )
+}
+
 export enum FeatureFlagsTab {
     OVERVIEW = 'overview',
     HISTORY = 'history',
@@ -115,6 +173,20 @@ export const featureFlagsLogic = kea<featureFlagsLogicType>([
                 results: state.results.filter((flag) => flag.id !== id),
             }),
         },
+        localFlagsCache: [
+            [] as FeatureFlagType[],
+            {
+                loadFeatureFlagsSuccess: (state, { featureFlags }) => {
+                    const existingById = new Map(state.map((f) => [f.id, f]))
+                    for (const flag of featureFlags.results) {
+                        existingById.set(flag.id, flag)
+                    }
+                    return Array.from(existingById.values())
+                },
+                updateFlag: (state, { flag }) => state.map((f) => (f.id === flag.id ? flag : f)),
+                deleteFlag: (state, { id }) => state.filter((f) => f.id !== id),
+            },
+        ],
         activeTab: [
             FeatureFlagsTab.OVERVIEW as FeatureFlagsTab,
             {
@@ -188,6 +260,12 @@ export const featureFlagsLogic = kea<featureFlagsLogicType>([
                 activity_scope: ActivityScope.FEATURE_FLAG,
             }),
         ],
+        displayedFlags: [
+            (s) => [s.localFlagsCache, s.filters],
+            (cache: FeatureFlagType[], filters: FeatureFlagsFilters): FeatureFlagType[] => {
+                return cache.filter((flag) => flagMatchesFilters(flag, filters))
+            },
+        ],
     }),
     listeners(({ actions, values }) => ({
         updateFlagActive: ({ id, active }) => {
@@ -255,7 +333,6 @@ export const featureFlagsLogic = kea<featureFlagsLogicType>([
             const pageFiltersFromUrl: Partial<FeatureFlagsFilters> = {
                 created_by_id,
                 type,
-                search,
                 order,
                 evaluation_runtime,
                 tags: parseTagsFilter(tags),
@@ -263,6 +340,7 @@ export const featureFlagsLogic = kea<featureFlagsLogicType>([
 
             pageFiltersFromUrl.active = active !== undefined ? String(active) : undefined
             pageFiltersFromUrl.page = page !== undefined ? parseInt(page) : undefined
+            pageFiltersFromUrl.search = search !== undefined ? String(search) : undefined
 
             actions.setFeatureFlagsFilters({ ...DEFAULT_FILTERS, ...pageFiltersFromUrl })
         },
