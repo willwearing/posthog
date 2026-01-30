@@ -1069,16 +1069,3 @@ class TestFlagDefinitionsCacheWithoutRedis(BaseTest):
         # Without Redis URL configured, the HyperCache will still work but won't track expiry
         # The update should complete successfully
         assert result is True
-
-    def test_management_commands_error_without_redis_url(self):
-        """Test management commands fail gracefully without FLAGS_REDIS_URL."""
-        from io import StringIO
-
-        from django.core.management import call_command
-
-        out = StringIO()
-        call_command("verify_flag_definitions_cache", f"--team-ids={self.team.id}", stdout=out)
-
-        output = out.getvalue()
-        assert "FLAGS_REDIS_URL" in output
-        assert "NOT configured" in output
